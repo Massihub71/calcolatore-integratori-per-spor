@@ -64,9 +64,13 @@ if sudorazione == "Alto (Maglietta bianca di sale)":
 sodio_mg_totali = round(base_sodio_l * acqua_totale)
 sale_cucina_g = round(sodio_mg_totali / 393.4, 1)
 
-# 3. Altri Elettroliti
+# 3. Altri Elettroliti (Fabbisogno puro vs Peso polvere citrati)
 potassio_mg = round(300 * acqua_totale) if usa_potassio_calcio else 0
 calcio_mg = round(150 * acqua_totale) if usa_potassio_calcio else 0
+
+# Conversione in grammi di polvere (Citrato di Potassio ~38% K+, Citrato di Calcio ~21% Ca2+)
+citrato_potassio_g = round(potassio_mg / 380, 1) if usa_potassio_calcio else 0.0
+citrato_calcio_g = round(calcio_mg / 210, 1) if usa_potassio_calcio else 0.0
 
 # 4. Ergogenici
 citrullina_g = 6.0 if usa_citrullina else 0.0
@@ -133,7 +137,7 @@ if formato_carbo == "Misto (Liquidi + Barrette/Gel)" and n_barrette > 0:
         **Preparazione:**
         1. Frulla i datteri con 2 cucchiai d'acqua tiepida fino a ottenere una pasta.
         2. In una ciotola unisci l'avena, la pasta di datteri, il miele e il sale. Impasta con le mani.
-        3. Stendi e compatisci bene sul fondo di un contenitore.
+        3. Stendi e compatta bene sul fondo di un contenitore.
         4. Metti in freezer per 30 minuti, poi taglia in 6 barrette.
         """)
         
@@ -160,14 +164,14 @@ st.markdown("---")
 st.subheader("🧪 Ricetta Miscela per la Borraccia")
 
 st.write(f"**Carboidrati Liquidi (Rapporto 2:1):**")
-st.write(f"- **Maltodestrine:** {malto} g")
-st.write(f"- **Fruttosio:** {fruttosio} g")
+st.write(f"- **Maltodestrine:** **{malto} g**")
+st.write(f"- **Fruttosio:** **{fruttosio} g**")
 
-st.write(f"**Elettroliti e Minerali:**")
-st.write(f"- **Sale da cucina (Sodio):** {sale_cucina_g} g")
+st.write(f"**Sali Minerali da Pesare (Polveri):**")
+st.write(f"- **Sale da cucina fino (Sodio):** **{sale_cucina_g} g** (pari a ~{sodio_mg_totali} mg di Sodio Na+)")
 if usa_potassio_calcio:
-    st.write(f"- **Citrato o Cloruro di Potassio:** {potassio_mg} mg (~{round(potassio_mg/1000, 2)}g)")
-    st.write(f"- **Calcio:** {calcio_mg} mg (~{round(calcio_mg/1000, 2)}g)")
+    st.write(f"- **Citrato di Potassio (polvere):** **{citrato_potassio_g} g** (pari a ~{potassio_mg} mg di Potassio puro K+)")
+    st.write(f"- **Citrato di Calcio (polvere):** **{citrato_calcio_g} g** (pari a ~{calcio_mg} mg di Calcio puro Ca2+)")
 
 st.markdown("---")
 st.subheader("⚡ Integrazione Specialistica & Pre-Workout")
@@ -175,9 +179,9 @@ st.subheader("⚡ Integrazione Specialistica & Pre-Workout")
 if citrullina_g > 0:
     st.markdown("""
     - **L-Citrullina Malato (Rapporto 2:1):** **6 g**
-      - **Rapporto molecolare:** Utilizza polvere con rapporto **2:1** (fornisce 4 g di L-Citrullina pura + 2 g di Acido Malico).
-      - **Volume d'acqua:** Sciogli **6 g in 250 - 300 ml d'acqua** (o succo di frutta per smorzare l'acidità).
-      - **Timing:** Bevi la miscela circa **30-45 minuti prima** dell'allenamento.
+      - **Composizione:** Rapporto 2:1 (fornisce 4g L-Citrullina pura + 2g Acido Malico).
+      - **Modalità d'uso:** Sciogli **6 g in 250 - 300 ml d'acqua** (o succo di frutta per smorzare l'acidità).
+      - **Timing:** Bevi la soluzione circa **30-45 minuti prima** dello sforzo.
     """)
 
 if glicerolo_g > 0:
