@@ -173,7 +173,12 @@ st.markdown("---")
 st.subheader("⚡ Integrazione Specialistica & Pre-Workout")
 
 if citrullina_g > 0:
-    st.write(f"- **L-Citrullina Malato:** **{citrullina_g} g** (da assumere 30-45 minuti prima dell'allenamento).")
+    st.markdown("""
+    - **L-Citrullina Malato (Rapporto 2:1):** **6 g**
+      - **Rapporto molecolare:** Utilizza polvere con rapporto **2:1** (fornisce 4 g di L-Citrullina pura + 2 g di Acido Malico).
+      - **Volume d'acqua:** Sciogli **6 g in 250 - 300 ml d'acqua** (o succo di frutta per smorzare l'acidità).
+      - **Timing:** Bevi la miscela circa **30-45 minuti prima** dell'allenamento.
+    """)
 
 if glicerolo_g > 0:
     st.info(f"💡 **Protocollo Glicerolo (Iperidratazione):** Sciogli **{glicerolo_g} g** di glicerolo in 1 Litro d'acqua da bere 2 ore prima del via.")
