@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Calcolatore Integrazione Sportiva PRO", page_icon="⚡")
 
 st.title("⚡ Calcolatore Personalizzato di Integrazione Sportiva PRO")
-st.write("Configura il tuo allenamento per calcolare liquidi, carboidrati, elettroliti avanzati e solidi.")
+st.write("Configura il tuo allenamento per calcolare liquidi, carboidrati, elettroliti avanzati, solidi e ricette fai-da-te.")
 
 st.sidebar.header("📋 Parametri Atleta e Sessione")
 
@@ -55,7 +55,7 @@ acqua_h = 500 if temp < 20 else (750 if temp <= 28 else 1000)
 if sudorazione == "Alto (Maglietta bianca di sale)":
     acqua_h += 200
 
-acqua_totale = round((acqua_h * durata_ore) / 1000, 2) # Litri
+acqua_totale = round((acqua_h * durata_ore) / 1000, 2)
 
 base_sodio_l = 600 if temp < 25 else 800
 if sudorazione == "Alto (Maglietta bianca di sale)":
@@ -64,11 +64,11 @@ if sudorazione == "Alto (Maglietta bianca di sale)":
 sodio_mg_totali = round(base_sodio_l * acqua_totale)
 sale_cucina_g = round(sodio_mg_totali / 393.4, 1)
 
-# 3. Altri Elettroliti (Potassio, Calcio)
+# 3. Altri Elettroliti
 potassio_mg = round(300 * acqua_totale) if usa_potassio_calcio else 0
 calcio_mg = round(150 * acqua_totale) if usa_potassio_calcio else 0
 
-# 4. Ergogenici (Citrullina, Glicerolo, EAA, Caffeina)
+# 4. Ergogenici
 citrullina_g = 6.0 if usa_citrullina else 0.0
 glicerolo_g = round(1.1 * peso, 1) if (temp >= 26 or durata_ore >= 3) else 0.0
 eaa_g = 10 if durata_ore >= 2.5 else 0
@@ -93,8 +93,66 @@ col4.metric("Potassio Totale", f"{potassio_mg} mg" if usa_potassio_calcio else "
 st.markdown("---")
 st.subheader("🍫 Strategia Solidi & Gel")
 if formato_carbo == "Misto (Liquidi + Barrette/Gel)" and n_barrette > 0:
-    st.write(f"- **Barrette / Gel (30g carbo ciascuno):** **{n_barrette} pezzi** (per un totale di {carbo_solidi}g di carboidrati solidi).")
+    st.write(f"- **Barrette / Gel (30g carbo ciascuno):** **{n_barrette} pezzi** (totale {carbo_solidi}g carboidrati).")
     st.write(f"- **Carboidrati rimanenti da sciogliere in acqua:** **{carbo_liquidi}g**")
+    
+    st.markdown("### 👨‍🍳 Guida alla Preparazione Solidi Fai-da-Te")
+    tab1, tab2, tab3 = st.tabs(["🌾 Rice Cakes Pro (Bici)", "🍯 Barrette Avena & Datteri", "🧪 Gel Energetico Fai-da-Te"])
+    
+    with tab1:
+        st.markdown("""
+        **Rice Cakes Ciclismo (Stile World Tour)**
+        *Facili da masticare in sella, ad altissima digeribilità (~30g carbo a mattonella).*
+        
+        **Ingredienti per 8 porzioni:**
+        - 250g Riso per minestre (Originario o Roma)
+        - 500ml Acqua
+        - 2 cucchiai di Zucchero o Miele (~30g)
+        - 100g Formaggio fresco spalmabile (es. Philadelphia) o Olio di cocco
+        - Marmellata o Cannella a piacere
+        
+        **Preparazione:**
+        1. Cuoci il riso nell'acqua finché non la assorbe del tutto e diventa molto morbido.
+        2. A fuoco spento, mescola il formaggio spalmabile, lo zucchero e la marmellata.
+        3. Stendi il composto in una teglia rettangolare livellandolo a 2 cm d'altezza.
+        4. Lascia in frigorifero per tutta la notte.
+        5. Taglia in 8 rettangoli uguali e avvolgili nella carta d'alluminio.
+        """)
+        
+    with tab2:
+        st.markdown("""
+        **Barrette Avena, Datteri e Miele (Senza Cottura)**
+        *Forniscono carboidrati a rilascio graduale per uscite lunghe (~30g carbo a barretta).*
+        
+        **Ingredienti per 6 barrette:**
+        - 120g Fiocchi d'avena leggeri
+        - 100g Datteri denocciolati
+        - 2 cucchiai di Miele (~40g)
+        - 1 pizzico di sale fino
+        
+        **Preparazione:**
+        1. Frulla i datteri con 2 cucchiai d'acqua tiepida fino a ottenere una pasta.
+        2. In una ciotola unisci l'avena, la pasta di datteri, il miele e il sale. Impasta con le mani.
+        3. Stendi e compatisci bene sul fondo di un contenitore.
+        4. Metti in freezer per 30 minuti, poi taglia in 6 barrette.
+        """)
+        
+    with tab3:
+        st.markdown("""
+        **Gel Energetico Fai-da-Te (Ratio 2:1)**
+        *Perfetto per la corsa o la bici da mettere nelle Soft Flask riutilizzabili.*
+        
+        **Ingredienti per 2 Gel (~30g carbo cad.):**
+        - 40g Maltodestrine in polvere
+        - 20g Fruttosio in polvere
+        - 35ml Acqua tiepida (o succo di limone)
+        - 1 pizzico di sale (~0.5g)
+        
+        **Preparazione:**
+        1. Mescola le polveri in una tazza.
+        2. Aggiungi l'acqua tiepida mescolando fino a sciogliere i grumi.
+        3. Versa la gelatina ottenuta in una miniborraccia morbida (Soft Flask da 100ml).
+        """)
 else:
     st.write("Hai scelto di assumere **tutti i carboidrati in formato liquido** nella borraccia.")
 
@@ -115,13 +173,13 @@ st.markdown("---")
 st.subheader("⚡ Integrazione Specialistica & Pre-Workout")
 
 if citrullina_g > 0:
-    st.write(f"- **L-Citrullina Malato:** **{citrullina_g} g** (da assumere 30-45 minuti prima dell'allenamento per favorire la vasodilatazione e ritardare l'affaticamento).")
+    st.write(f"- **L-Citrullina Malato:** **{citrullina_g} g** (da assumere 30-45 minuti prima dell'allenamento).")
 
 if glicerolo_g > 0:
     st.info(f"💡 **Protocollo Glicerolo (Iperidratazione):** Sciogli **{glicerolo_g} g** di glicerolo in 1 Litro d'acqua da bere 2 ore prima del via.")
 
 if eaa_g > 0:
-    st.write(f"- **Aminoacidi Essenziali (EAA):** **{eaa_g} g** (da aggiungere nella borraccia per la protezione muscolare nelle lunghe distanze).")
+    st.write(f"- **Aminoacidi Essenziali (EAA):** **{eaa_g} g** (da aggiungere nella borraccia per la protezione muscolare).")
 
 if caffeina_mg > 0:
     st.write(f"- **Caffeina Anidra:** **{caffeina_mg} mg** (assunta pre-gara o divisa durante lo sforzo).")
