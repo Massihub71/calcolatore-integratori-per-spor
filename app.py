@@ -23,7 +23,15 @@ intensita = st.sidebar.select_slider("Intensità Sforzo", options=["Bassa (Z1-Z2
 temp = st.sidebar.slider("Temperatura Ambientale (°C)", min_value=5, max_value=40, value=25)
 sudorazione = st.sidebar.selectbox("Tasso di Sudorazione", ["Basso", "Medio", "Alto (Maglietta bianca di sale)"])
 tolleranza_carbo = st.sidebar.slider("Tolleranza Carboidrati (g/ora)", min_value=30, max_value=120, value=60, step=10)
-sensib_caff = st.sidebar.selectbox("Sensibilità Caffeina", ["Nessuna", "Bassa / Media", "Alta"])
+
+# Opzioni Caffeina chiarite e ordinate per tolleranza crescente
+opzioni_caff = [
+    "Nessuna / Disattivata (0 mg)",
+    "Bassa Tolleranza / Sensibile (1.5 mg/kg)",
+    "Media Tolleranza (3.0 mg/kg)",
+    "Alta Tolleranza / Abituato (4.5 mg/kg)"
+]
+sensib_caff = st.sidebar.selectbox("Tolleranza alla Caffeina", opzioni_caff, index=2)
 
 st.sidebar.divider()
 st.sidebar.header("🍫 Solidi & Integrazione Extra")
@@ -35,25 +43,43 @@ if formato_carbo == "Misto (Liquidi + Barrette/Gel)":
 usa_citrullina = st.sidebar.checkbox("Citrullina Malato (Pre-workout)", value=True)
 usa_potassio_calcio = st.sidebar.checkbox("Potassio e Calcio (Profilo Elettrolitico)", value=True)
 
-# --- LOGICA DI CALCOLO ---
-if intensita == "Bassa (Z1-Z2)":
-    carbo_h = min(40, tolleranza_carbo)
-elif intensita == "Media (Z3)":
-    carbo_h = min(60, tolleranza_carbo)
+# --- LOGICA DI CALCOLO CARBOIDRATI (A SCAGLIONI E SCALATA SUL PESO) ---
+if durata_min < 45:
+    carbo_h = 0
+elif durata_min < 75:
+    # Breve durata: integrazione minima solo ad alta intensità
+    base_carbo = 0 if intensita == "Bassa (Z1-Z2)" else (20 if intensita == "Media (Z3)" else 35)
+    carbo_h = min(base_carbo, tolleranza_carbo)
+elif durata_min < 150:
+    # Media durata (1h15m - 2h30m)
+    base_carbo = 35 if intensita == "Bassa (Z1-Z2)" else (50 if intensita == "Media (Z3)" else 65)
+    # Aggiustamento dinamico sul peso corporeo (±10% per pesi estremi)
+    factor_peso = 0.9 if peso < 60 else (1.1 if peso > 80 else 1.0)
+    carbo_h = min(round(base_carbo * factor_peso), tolleranza_carbo)
 else:
-    carbo_h = tolleranza_carbo
+    # Lunga durata (> 2h30m)
+    base_carbo = 45 if intensita == "Bassa (Z1-Z2)" else (65 if intensita == "Media (Z3)" else 90)
+    factor_peso = 0.9 if peso < 60 else (1.1 if peso > 80 else 1.0)
+    carbo_h = min(round(base_carbo * factor_peso), tolleranza_carbo)
 
 carbo_totali = round(carbo_h * durata_ore)
 
-carbo_solidi = n_barrette * 30
-if carbo_solidi > carbo_totali:
-    carbo_solidi = carbo_totali
-    n_barrette = carbo_solidi // 30
+# Gestione Solidi vs Liquidi
+if carbo_totali > 0:
+    carbo_solidi = n_barrette * 30
+    if carbo_solidi > carbo_totali:
+        carbo_solidi = carbo_totali
+        n_barrette = carbo_solidi // 30
+    carbo_liquidi = carbo_totali - carbo_solidi
+else:
+    carbo_solidi = 0
+    carbo_liquidi = 0
+    n_barrette = 0
 
-carbo_liquidi = carbo_totali - carbo_solidi
 malto = round(carbo_liquidi * (2/3))
 fruttosio = round(carbo_liquidi * (1/3))
 
+# --- LOGICA DI CALCOLO IDRATAZIONE ED ELETTROLITI ---
 acqua_h = 500 if temp < 20 else (750 if temp <= 28 else 1000)
 if sudorazione == "Alto (Maglietta bianca di sale)":
     acqua_h += 200
@@ -77,11 +103,15 @@ citrullina_g = 6.0 if usa_citrullina else 0.0
 glicerolo_g = round(1.1 * peso, 1) if (temp >= 26 or durata_ore >= 3) else 0.0
 eaa_g = 10 if durata_ore >= 2.5 else 0
 
-caffeina_mg = 0
-if sensib_caff == "Bassa / Media":
-    caffeina_mg = round(3 * peso)
-elif sensib_caff == "Alta":
+# --- LOGICA CAFFEINA CORRETTA ---
+if "1.5 mg/kg" in sensib_caff:
     caffeina_mg = round(1.5 * peso)
+elif "3.0 mg/kg" in sensib_caff:
+    caffeina_mg = round(3.0 * peso)
+elif "4.5 mg/kg" in sensib_caff:
+    caffeina_mg = round(4.5 * peso)
+else:
+    caffeina_mg = 0
 
 # --- METRICHE PRINCIPALI ---
 col1, col2, col3, col4 = st.columns(4)
@@ -92,7 +122,7 @@ col4.metric("🍌 Potassio Totale", f"{potassio_mg} mg" if usa_potassio_calcio e
 
 st.divider()
 
-# --- CORPO PRINCIPALE IN CARD NATIVE STREAMLIT ---
+# --- CORPO PRINCIPALE ---
 col_left, col_right = st.columns(2)
 
 with col_left:
@@ -100,6 +130,8 @@ with col_left:
         st.subheader("🍾 Miscela Borraccia (Liquidi ed Elettroliti)")
         st.write(f"Sciogliere il tutto in **{acqua_totale} Litri d'acqua** (divisi nelle borracce previste):")
         st.divider()
+        if carbo_totali == 0:
+            st.info("💡 Per allenamenti sotto i 45 minuti non è necessario integrare carboidrati. Mantieni solo l'idratazione e gli elettroliti.")
         st.markdown(f"🔹 **Maltodestrine:** {malto} g")
         st.markdown(f"🔹 **Fruttosio:** {fruttosio} g")
         st.markdown(f"🔹 **Sale da Cucina Fino (Sodio):** {sale_cucina_g} g")
@@ -123,7 +155,7 @@ with col_right:
         if citrullina_g > 0:
             has_preworkout = True
             st.markdown(f"🧪 **L-Citrullina Malato (2:1):** **{citrullina_g} g**")
-            st.caption("Sciogliere in 250-300 ml d'acqua e bere **30-45 min prima dello sforzo** (fornisce 4g Citrullina + 2g Acido Malico).")
+            st.caption("Sciogliere in 250-300 ml d'acqua e bere **30-45 min prima dello sforzo**.")
             st.divider()
             
         if glicerolo_g > 0:
@@ -144,7 +176,7 @@ with col_right:
 st.divider()
 st.subheader("🍫 Strategia Solidi & Ricettario Fai-da-Te")
 
-if formato_carbo == "Misto (Liquidi + Barrette/Gel)" and n_barrette > 0:
+if formato_carbo == "Misto (Liquidi + Barrette/Gel)" and n_barrette > 0 and carbo_totali > 0:
     st.info(f"Hai scelto di apportare **{carbo_solidi}g di carboidrati** tramite **{n_barrette} solidi/gel** (30g carbo cad.), riducendo la quota in borraccia a **{carbo_liquidi}g**.")
     
     tab1, tab2, tab3 = st.tabs(["🌾 Rice Cakes Pro (Ciclismo)", "🍯 Barrette Avena & Datteri", "🧪 Gel Energetico Fai-da-Te"])
@@ -184,4 +216,4 @@ if formato_carbo == "Misto (Liquidi + Barrette/Gel)" and n_barrette > 0:
             3. Travasa nella soft flask ed è pronto all'uso.
         """)
 else:
-    st.write("Stai fornendo **il 100% dell'energia via borraccia**. Se desideri integrare solidi o preparare gel fai-da-te, seleziona la modalità **Misto** nel menu a sinistra.")
+    st.write("Stai fornendo **il 100% dell'energia via borraccia** (o lo sforzo non richiede integrazione solida). Se desideri integrare solidi, seleziona la modalità **Misto** nel menu a sinistra.")
