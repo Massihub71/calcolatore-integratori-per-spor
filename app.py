@@ -22,9 +22,10 @@ sport = st.sidebar.selectbox("Disciplina", ["Ciclismo", "Corsa", "Nuoto", "Pales
 intensita = st.sidebar.select_slider("Intensità Sforzo", options=["Bassa (Z1-Z2)", "Media (Z3)", "Alta / Gara (Z4-Z5)"])
 temp = st.sidebar.slider("Temperatura Ambientale (°C)", min_value=5, max_value=40, value=25)
 sudorazione = st.sidebar.selectbox("Tasso di Sudorazione", ["Basso", "Medio", "Alto (Maglietta bianca di sale)"])
-tolleranza_carbo = st.sidebar.slider("Tolleranza Carboidrati (g/ora)", min_value=30, max_value=120, value=60, step=10)
 
-# Opzioni Caffeina chiarite e ordinate per tolleranza crescente
+# Tolleranza massima impostabile dall'utente
+tolleranza_carbo = st.sidebar.slider("Target/Tolleranza Carboidrati (g/ora)", min_value=0, max_value=120, value=60, step=5)
+
 opzioni_caff = [
     "Nessuna / Disattivata (0 mg)",
     "Bassa Tolleranza / Sensibile (1.5 mg/kg)",
@@ -36,6 +37,7 @@ sensib_caff = st.sidebar.selectbox("Tolleranza alla Caffeina", opzioni_caff, ind
 st.sidebar.divider()
 st.sidebar.header("🍫 Solidi & Integrazione Extra")
 formato_carbo = st.sidebar.selectbox("Strategia Carboidrati", ["Tutto in Borraccia (Solo Liquidi)", "Misto (Liquidi + Barrette/Gel)"])
+
 n_barrette = 0
 if formato_carbo == "Misto (Liquidi + Barrette/Gel)":
     n_barrette = st.sidebar.number_input("Quante barrette/gel consumi? (30g carbo cad.)", min_value=1, max_value=10, value=2)
@@ -43,24 +45,19 @@ if formato_carbo == "Misto (Liquidi + Barrette/Gel)":
 usa_citrullina = st.sidebar.checkbox("Citrullina Malato (Pre-workout)", value=True)
 usa_potassio_calcio = st.sidebar.checkbox("Potassio e Calcio (Profilo Elettrolitico)", value=True)
 
-# --- LOGICA DI CALCOLO CARBOIDRATI (A SCAGLIONI E SCALATA SUL PESO) ---
+# --- LOGICA DI CALCOLO CARBOIDRATI DINAMICA E REATTIVA ---
 if durata_min < 45:
     carbo_h = 0
-elif durata_min < 75:
-    # Breve durata: integrazione minima solo ad alta intensità
-    base_carbo = 0 if intensita == "Bassa (Z1-Z2)" else (20 if intensita == "Media (Z3)" else 35)
-    carbo_h = min(base_carbo, tolleranza_carbo)
-elif durata_min < 150:
-    # Media durata (1h15m - 2h30m)
-    base_carbo = 35 if intensita == "Bassa (Z1-Z2)" else (50 if intensita == "Media (Z3)" else 65)
+else:
+    # Moltiplicatore intensità (0.6 per Z1-Z2, 0.85 per Z3, 1.0 per Z4-Z5)
+    mult_int = 0.6 if intensita == "Bassa (Z1-Z2)" else (0.85 if intensita == "Media (Z3)" else 1.0)
+    
     # Aggiustamento dinamico sul peso corporeo (±10% per pesi estremi)
     factor_peso = 0.9 if peso < 60 else (1.1 if peso > 80 else 1.0)
-    carbo_h = min(round(base_carbo * factor_peso), tolleranza_carbo)
-else:
-    # Lunga durata (> 2h30m)
-    base_carbo = 45 if intensita == "Bassa (Z1-Z2)" else (65 if intensita == "Media (Z3)" else 90)
-    factor_peso = 0.9 if peso < 60 else (1.1 if peso > 80 else 1.0)
-    carbo_h = min(round(base_carbo * factor_peso), tolleranza_carbo)
+    
+    # Il valore risponde DIRETTAMENTE alla tolleranza/target impostato dall'utente
+    carbo_h = round(tolleranza_carbo * mult_int * factor_peso)
+    carbo_h = min(carbo_h, 120)
 
 carbo_totali = round(carbo_h * durata_ore)
 
@@ -103,7 +100,7 @@ citrullina_g = 6.0 if usa_citrullina else 0.0
 glicerolo_g = round(1.1 * peso, 1) if (temp >= 26 or durata_ore >= 3) else 0.0
 eaa_g = 10 if durata_ore >= 2.5 else 0
 
-# --- LOGICA CAFFEINA CORRETTA ---
+# --- LOGICA CAFFEINA ---
 if "1.5 mg/kg" in sensib_caff:
     caffeina_mg = round(1.5 * peso)
 elif "3.0 mg/kg" in sensib_caff:
